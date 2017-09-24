@@ -15,6 +15,10 @@ The system allows you to connect **devices**, build **rules** based on the
 
 Basically an implementation of the "if this, then that" principle.
 
+## Architecture
+
+![architecture][docs/components.png]
+
 ## User manual
 
 
