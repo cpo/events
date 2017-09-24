@@ -112,7 +112,8 @@ are present under `"rules"`.
 ##### HUE
 
 This configures the Philips HUE bridge. This bridge uses a polling mechanism
-to retrieve all the device statuses. 
+to retrieve all the device statuses. Every status change will be converted
+into an event URL and published to the event manager.
 
 **Make sure that you do not saturate the HUE bridge by setting the 
 `pollInterval` too low.** If you keep it below 10 polls per second you 
@@ -130,13 +131,13 @@ Configuration example:
     }
 ```
 
-Key        | Explanation
----------- | -------------
-name       | The name this bridge will be known as. It is used in the addressing scheme triggers use. E.g: bridge://NAME/rest/of/uri. 
-description | The description of this device. Only for documenting the bridge.
-type        / "hue"
-apiKey      / The API key this device can be accessed with on the local network.
-pollInterval / Poll interval in milliseconds. Keep this above 100.
+Key          | Explanation
+------------ | -------------
+name         | The name this bridge will be known as. It is used in the addressing scheme triggers use. E.g: bridge://NAME/rest/of/uri. 
+description  | The description of this device. Only for documenting the bridge.
+type         | "hue"
+apiKey       | The API key of the Hue bridge. See the philips HUE documentation on how to setup an API key.
+pollInterval | Poll interval in milliseconds. Keep this above 100.
 
 ##### MQTT
 
