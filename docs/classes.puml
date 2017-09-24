@@ -1,0 +1,19 @@
+@startuml
+
+EventManager -left-> Bridge: bridges
+EventManager --> Rule: rules
+Rule --> Action: actions
+
+Action <|-- TriggerAction
+Action <|-- WaitAction
+
+Bridge --> EventManager: myManager
+
+Bridge <|-- HueBridge
+Bridge <|-- MQTTBridge
+
+Rule <|- RegExRule
+
+EventManager <|- EventManagerImpl
+
+@enduml

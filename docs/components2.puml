@@ -1,0 +1,18 @@
+@startuml
+
+
+    component EventManager {
+        component Core
+        component MQTTBridge
+        component HUEBridge
+        Core --> HUEBridge
+        Core --> MQTTBridge
+    }
+
+    node HUE
+    node MQTT
+
+    HUEBridge --> HUE
+    MQTTBridge --> MQTT
+
+@enduml

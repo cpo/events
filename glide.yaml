@@ -1,0 +1,22 @@
+package: .
+import:
+- package: github.com/cpo/events
+  subpackages:
+  - actions
+  - bridges
+  - bridges/hue
+  - bridges/mqtt
+  - interfaces
+  - manager
+  - rules
+- package: github.com/cpo/go-hue
+  subpackages:
+  - groups
+  - lights
+  - portal
+  - sensors
+- package: github.com/satori/go.uuid
+- package: github.com/yosssi/gmq
+  subpackages:
+  - mqtt
+  - mqtt/client

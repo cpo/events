@@ -1,0 +1,27 @@
+@startuml
+
+
+node LinuxBoard {
+    component MQTTBroker
+    component EventManager
+    EventManager <--> MQTTBroker
+}
+
+package "HUE Ecosysteem" {
+    component HueBridge
+    component Lamp
+    component BewegingsSensor
+
+    HueBridge <-- BewegingsSensor
+    HueBridge <-- Lamp
+
+}
+
+EventManager <--> HueBridge
+
+package "Sonoff ecosysteem" {
+    component SonOff
+    MQTTBroker <--> SonOff
+}
+
+@enduml

@@ -1,0 +1,38 @@
+{
+  "bridges": [
+    {
+      "name": "hue1",
+      "description": "HUE bridge 1",
+      "type": "hue",
+      "apiKey": "ktA1-FuirVj0yz6MXmpdx8QXgFIL44lAcC0ikeBl",
+      "pollInterval": 200
+    },
+    {
+      "name": "mqtt1",
+      "description": "MQTT bridge 1: beaglebone.local",
+      "type": "mqtt",
+      "host": "beaglebone.local",
+      "port": 1883,
+      "user": "mqtt",
+      "password": "emkutete",
+      "proto": "tcp",
+      "clientId": "mqtt-bridge"
+    }
+  ],
+  "rules": [
+    {
+      "type": "regex",
+      "regex": "^hue://hue1/sensors/10/button#3000$",
+      "actions": [
+        {
+          "type": "wait",
+          "seconds": 5
+        },
+        {
+          "type": "trigger",
+          "trigger": "bridge://hue1/lamp2/on"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+@startuml
+
+main -> EventManager: <<create>>
+main -> main: Read config
+main -> Bridge1: <<create>>
+main -> Bridge2: <<create>>
+
+main -> EventManager: AddBridge(bridge1)
+main -> EventManager: AddBridge(bridge2)
+main -> EventManager: Run()
+EventManager -> EventManager: main loop
+
+Bridge1 --> EventManager: Dispatch(event)
+EventManager -> Bridge2: Trigger(event)
+
+@enduml
