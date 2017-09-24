@@ -62,7 +62,7 @@ The rule we could configure would be:
 ```json
     {
       "type": "regex",
-      "regex": "^hue://hue1/sensors/10/button#3000$",
+      "regex": "^hue://hue1/sensors/10/button#4000$",
       "actions": [
         {
           "type": "wait",
@@ -82,13 +82,10 @@ so the actions in this rule are executed one by one.
 
 The first action will wait 5 seconds, the second will trigger an event 
 on bridge "mqtt1". This will cause the topic "sonoff-mylight/cmnd/Power1" 
-to be published (empty message). It will cause the SonOff switch 
-(you will need tasmota firmware for this!) to toggle it's power.
+to be published (empty message). 
 
-
-
-## User manual
-
+It will cause the SonOff switch (you will need tasmota firmware for 
+this!) to toggle it's power.
 
 ### Installation
 
