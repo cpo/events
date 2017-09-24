@@ -17,7 +17,7 @@ Basically an implementation of the "if this, then that" principle.
 
 ## Architecture
 
-![architecture][docs/components.png]
+![Architecture](https://./docs/components.png)
 
 ## User manual
 
