@@ -50,6 +50,8 @@ The bridges handle the device specifics of each device, enabling
 the event manager to receive and send events from any bridge to 
 any bridge (or even the same bridge).
 
+![Components](docs/components2.png)
+
 The event manager maintains a list of "rules". Each event the event 
 manager receives, is checked against the *rules*. When such a rule
 matches, the *actions* of that rule are executed.
