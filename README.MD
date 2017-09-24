@@ -91,7 +91,56 @@ this!) to toggle it's power.
 
 ### Configuration
 
+The configuration file is structured as follows:
+
+```json
+{
+  "bridges": [
+    ...
+  ],
+  "rules": [
+    ...
+  ]
+}
+```
+
+All the bridges are mentioned in an array under `"bridges"`, all the rules 
+are present under `"rules"`. 
+
 #### Bridges
+
+##### HUE
+
+This configures the Philips HUE bridge. This bridge uses a polling mechanism
+to retrieve all the device statuses. 
+
+**Make sure that you do not saturate the HUE bridge by setting the 
+`pollInterval` too low.** If you keep it below 10 polls per second you 
+should be fine. 
+
+Configuration example:
+
+```json
+    {
+      "name": "hue1",
+      "description": "HUE bridge 1",
+      "type": "hue",
+      "apiKey": "ktA1-FuirVj0yz6MXmpdx8QXgFIL44lAcC0ikeBd",
+      "pollInterval": 200
+    }
+```
+
+Key        | Explanation
+---------- | -------------
+name       | The name this bridge will be known as. It is used in the addressing scheme triggers use. E.g: bridge://NAME/rest/of/uri. 
+description | The description of this device. Only for documenting the bridge.
+type        / "hue"
+apiKey      / The API key this device can be accessed with on the local network.
+pollInterval / Poll interval in milliseconds. Keep this above 100.
+
+##### MQTT
+
+
 
 #### Rules
 
