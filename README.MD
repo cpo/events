@@ -27,8 +27,63 @@ The main architecture:
 ![Architecture](docs/components.png)
 
 The Event Manager is controlled using a configuration file. This 
-configuration file activates bridges (such as MQTT devices or HUE 
+configuration file activates "bridges" (such as MQTT devices or HUE 
 hubs) and integrates the device into the event manager.
+
+The bridges handle the device specifics of each device, enabling 
+the event manager to receive and send events from any bridge to 
+any bridge (or even the same bridge).
+
+The event manager maintains a list of "rules". Each event the event 
+manager receives, is checked against the *rules*. When such a rule
+matches, the *actions* of that rule are executed.
+
+An *action* might be to trigger something on another bridge, or maybe
+send out an email or...
+
+## An example
+
+We want to create the scenario that if you press on a hue light button,
+a SonOff switch will react to that event.
+
+All events are expressed in URL's. An URL indicates what type of bridge,
+what bridge and which device under that bridge the event is related to.
+
+```
+hue://hue1/sensors/10/button#4000
+```
+
+Might be an example of a hue 4-button button on bridge `hue`, sensor 
+`10`. The last part, #4000 tells us button 4 has been pressed. This is 
+where we want to match a rule to. 
+
+The rule we could configure would be:
+ 
+```json
+    {
+      "type": "regex",
+      "regex": "^hue://hue1/sensors/10/button#3000$",
+      "actions": [
+        {
+          "type": "wait",
+          "seconds": 5
+        },
+        {
+          "type": "trigger",
+          "trigger": "bridge://mqtt1/sonoff-mylight/cmnd/Power1"
+        }
+      ]
+    }
+```
+
+The rule here is a rule of type regex. It needs a regular expression
+on which to match the event. The button press event matches this rule,
+so the actions in this rule are executed one by one.
+
+The first action will wait 5 seconds, the second will trigger an event 
+on bridge "mqtt1". This will cause the topic "sonoff-mylight/cmnd/Power1" 
+to be published (empty message). It will cause the SonOff switch 
+(you will need tasmota firmware for this!) to toggle it's power.
 
 
 
