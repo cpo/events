@@ -16,6 +16,22 @@ The system allows you to connect **devices**, build **rules** based on the
 Basically an implementation of the "if this, then that" principle, 
 but hosted in your own home.
 
+## What can you do with this?
+
+Suppose you could address all devices, not regarding the maker of the 
+device and setup rules to take actions... almost anything!
+
+For example, a sensor near a window might instruct the HUE bridge to 
+turn on all the lights, send an SMS to a mobile number and switch on
+a SonOff switch which activates a siren.
+
+...or when a daylight sensor senses that is is dark, it will instruct 
+a Z-wave bridge to close the curtains.
+
+...and so on.
+
+The possibilities are almost limitless!
+
 ## Architecture
 
 The main component of this project runs on a linux board. I use the 
@@ -96,10 +112,12 @@ The configuration file is structured as follows:
 ```json
 {
   "bridges": [
-    ...
+    {..rule..},
+    {..rule..},
   ],
   "rules": [
-    ...
+    {..rule..},
+    {..rule..},
   ]
 }
 ```
