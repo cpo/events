@@ -7,12 +7,9 @@ import (
 	"github.com/cpo/go-hue/lights"
 	"github.com/cpo/go-hue/portal"
 	"github.com/cpo/go-hue/sensors"
-	"log"
-	"os"
+	logger "github.com/Sirupsen/logrus"
 	"sync"
 )
-
-var logger = log.New(os.Stderr, "[HUEB] ", 1)
 
 type HueBridge struct {
 	id           string
@@ -32,7 +29,7 @@ func (hue *HueBridge) Initialize(eventManager interfaces.EventManager, config ma
 	hue.apiKey = config["apiKey"].(string)
 	hue.eventManager = eventManager
 	hue.pollInterval = int64(config["pollInterval"].(float64))
-	logger.Printf("Initialize HUE bridge %s with %s", hue.GetID(), cfgStr)
+	logger.Debugf("Initialize HUE bridge %s with %s", hue.GetID(), cfgStr)
 }
 
 func (hue *HueBridge) GetID() string {
@@ -40,7 +37,7 @@ func (hue *HueBridge) GetID() string {
 }
 
 func (hue *HueBridge) Connect() {
-	logger.Printf("Connecting HUE bridge %s", hue.id)
+	logger.Info("Connecting HUE bridge %s", hue.id)
 
 	pp, err := portal.GetPortal()
 	if err != nil {
@@ -51,33 +48,30 @@ func (hue *HueBridge) Connect() {
 	if err != nil {
 		logger.Panic("lights.GetAllLights() ERROR: ", err)
 	}
-	logger.Println()
-	logger.Println("Lights")
-	logger.Println("------")
+	logger.Debugf("Lights")
+	logger.Debugf("------")
 	for _, l := range allLights {
-		logger.Printf("ID: %d Name: %s\n", l.ID, l.Name)
+		logger.Debugf("ID: %d Name: %sZ-Wave", l.ID, l.Name)
 	}
 	gg := groups.New(pp[0].InternalIPAddress, hue.apiKey)
 	allGroups, err := gg.GetAllGroups()
 	if err != nil {
 		logger.Panic("groups.GetAllGroups() ERROR: ", err)
 	}
-	logger.Println()
-	logger.Println("Groups")
-	logger.Println("------")
+	logger.Debugf("Groups")
+	logger.Debugf("------")
 	for _, g := range allGroups {
-		logger.Printf("ID: %d Name: %s\n", g.ID, g.Name)
+		logger.Debugf("ID: %d Name: %sZ-Wave", g.ID, g.Name)
 	}
 	ss := sensors.New(pp[0].InternalIPAddress, hue.apiKey)
 	allSensors, err := ss.GetAllSensors()
 	if err != nil {
 		logger.Panic("groups.GetAllSensors() ERROR: ", err)
 	}
-	logger.Println()
-	logger.Println("Sensors")
-	logger.Println("------")
+	logger.Debugf("Sensors")
+	logger.Debugf("------")
 	for _, g := range allSensors {
-		logger.Printf("ID: %d Name: %s\n", g.ID, g.Name)
+		logger.Debugf("ID: %d Name: %sZ-Wave", g.ID, g.Name)
 	}
 
 	go hue.pollSensors(ss)
@@ -89,8 +83,8 @@ func (hue *HueBridge) Connect() {
 }
 
 func (hue *HueBridge) Stop() {
-	logger.Printf("Stop HUE bridge %s", hue.id)
+	logger.Debugf("Stop HUE bridge %s", hue.id)
 }
 func (hue *HueBridge) Trigger(uri string) {
-	logger.Printf("Trigger bridge %s: %s", hue.id, uri)
+	logger.Debugf("Trigger bridge %s: %s", hue.id, uri)
 }

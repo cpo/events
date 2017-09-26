@@ -6,6 +6,7 @@ import:
   - bridges
   - bridges/hue
   - bridges/mqtt
+  - bridges/zwave
   - interfaces
   - manager
   - rules

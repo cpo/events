@@ -14,6 +14,6 @@ func (ta *TriggerAction) Initialize(config map[string]interface{}) *TriggerActio
 }
 
 func (ta *TriggerAction) Run(eventManager interfaces.EventManager, id string) {
-	logger.Printf(" [%s] action: trigger URL %s", id, ta.URL)
+	logger.Debugf(" [%s] action: trigger URL %s", id, ta.URL)
 	eventManager.Trigger(ta.URL)
 }

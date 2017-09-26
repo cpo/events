@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"github.com/cpo/go-hue/sensors"
+	logger "github.com/Sirupsen/logrus"
 )
 
 type SensorState struct {
@@ -32,12 +33,12 @@ func NewSensorState(sensor sensors.Sensor) SensorState {
 func (hue *HueBridge) pollSensors(srs *sensors.Sensors) {
 	previousSensorInfo := make(map[int]SensorState)
 	for true {
-		//logger.Printf("Polling sensors")
+		//logger.Debugf("Polling sensors")
 		sensorInfo, err := srs.GetAllSensors()
 		if err == nil {
 			if previousSensorInfo == nil {
 				// first call
-				logger.Printf("Got %d sensors", len(sensorInfo))
+				logger.Debugf("Got %d sensors", len(sensorInfo))
 				for _, v := range sensorInfo {
 					previousSensorInfo[v.ID] = NewSensorState(v)
 				}
@@ -45,11 +46,11 @@ func (hue *HueBridge) pollSensors(srs *sensors.Sensors) {
 				// diff the two
 				for _, sensor := range sensorInfo {
 					newSensorState := NewSensorState(sensor)
-					//logger.Printf("Compare state %s", newSensorState.String())
+					//logger.Debugf("Compare state %s", newSensorState.String())
 					if prevSensorState, found := previousSensorInfo[sensor.ID]; found {
 						hue.triggerEventsBasedOnChange(prevSensorState, newSensorState, sensor)
 					} else {
-						logger.Printf("New sensor: %d", sensor.ID)
+						logger.Debugf("New sensor: %d", sensor.ID)
 					}
 
 					previousSensorInfo[sensor.ID] = newSensorState
@@ -72,7 +73,7 @@ func (bridge *HueBridge) triggerEventsBasedOnChange(then SensorState, now Sensor
 		return false
 	}
 	if then != now {
-		logger.Printf(" === Difference in state %s / %s", then, now)
+		logger.Debugf(" === Difference in state %s / %s", then, now)
 		event := ""
 		if then.ButtonState != now.ButtonState {
 			event = fmt.Sprintf("hue://%s/sensors/%d/button#%s", bridge.id, now.ID, now.ButtonState)
@@ -85,7 +86,7 @@ func (bridge *HueBridge) triggerEventsBasedOnChange(then SensorState, now Sensor
 		} else {
 			return false
 		}
-		logger.Printf(" state change %s", event)
+		logger.Debugf(" state change %s", event)
 		go bridge.eventManager.Dispatch(event)
 		return true
 	}

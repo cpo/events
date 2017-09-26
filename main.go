@@ -2,16 +2,24 @@ package main
 
 import (
 	"github.com/cpo/events/manager"
-	"log"
-	"os"
+	logger "github.com/Sirupsen/logrus"
+	"flag"
 )
 
-var logger = log.New(os.Stderr, "[main] ", 1)
-
 func main() {
+
+	logLevel := flag.String("loglevel", "debug", "Set loglevel (debug|info|warn|error)")
+	flag.Parse()
+
+	formatter := new(logger.TextFormatter)
+	formatter.ForceColors=true
+	logger.SetFormatter(formatter)
+	level,_:=logger.ParseLevel(*logLevel)
+	logger.SetLevel(level)
+
 	var evtMgr = manager.New()
 
-	logger.Printf("Startup")
+	logger.Info("Startup")
 
 	evtMgr.Start()
 }

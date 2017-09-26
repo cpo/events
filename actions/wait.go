@@ -15,6 +15,6 @@ func (wa *WaitAction) Initialize(config map[string]interface{}) *WaitAction {
 }
 
 func (wa *WaitAction) Run(eventManager interfaces.EventManager, id string) {
-	logger.Printf(" [%s] action: Wait for %d seconds", id, wa.Seconds)
+	logger.Debugf(" [%s] action: Wait for %d seconds", id, wa.Seconds)
 	time.Sleep(time.Duration(wa.Seconds) * time.Second)
 }

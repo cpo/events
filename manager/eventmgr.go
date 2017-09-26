@@ -8,15 +8,13 @@ import (
 	"github.com/cpo/events/rules"
 	"github.com/satori/go.uuid"
 	"io/ioutil"
-	"log"
+	logger "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
 	"regexp"
 	"runtime"
 	"time"
 )
-
-var logger = log.New(os.Stderr, "[EVTM] ", 1)
 
 type EventManagerImpl struct {
 	id      string
@@ -28,47 +26,50 @@ func New() interfaces.EventManager {
 	return new(EventManagerImpl).initialize()
 }
 
-func (manager *EventManagerImpl) initialize() interfaces.EventManager {
-	manager.id = uuid.NewV4().String()
-	manager.bridges = make(map[string]interfaces.Bridge)
-	logger.Printf("Initializing EventManager %s", manager.id)
-	return manager
+func (em *EventManagerImpl) initialize() interfaces.EventManager {
+	em.id = uuid.NewV4().String()
+	em.bridges = make(map[string]interfaces.Bridge)
+	logger.Debugf("Initializing EventManager %s", em.id)
+	return em
 }
 
-func (eventManager *EventManagerImpl) AddBridge(bridge interfaces.Bridge, bridgeConfig map[string]interface{}) {
-	bridge.Initialize(eventManager, bridgeConfig)
+func (em *EventManagerImpl) AddBridge(bridge interfaces.Bridge, bridgeConfig map[string]interface{}) {
+	bridge.Initialize(em, bridgeConfig)
 	go bridge.Connect()
-	logger.Printf("Adding bridge %s", bridge.GetID())
-	eventManager.bridges[bridge.GetID()] = bridge
-	logger.Printf("#bridges: %d", len(eventManager.bridges))
+	logger.Debugf("Adding bridge %s", bridge.GetID())
+	em.bridges[bridge.GetID()] = bridge
+	logger.Debugf("#bridges: %d", len(em.bridges))
 }
 
-func (eventManager *EventManagerImpl) Dispatch(url string) {
-	logger.Printf("Dispatching event %s", url)
-	for ruleN, rule := range eventManager.rules {
+func (em *EventManagerImpl) Dispatch(url string) {
+	logger.Debugf("Dispatching event %s", url)
+	matches := 0
+	for ruleN, rule := range em.rules {
 		if rule.Matches(url) {
-			logger.Printf("Rule %d matches. Execute %d actions", ruleN, len(rule.GetActions()))
+			matches++
+			logger.Info("Rule %d matches. Execute %d actions", ruleN, len(rule.GetActions()))
 			myId := uuid.NewV4().String()
 			for _, action := range rule.GetActions() {
 				acJson,_ := json.Marshal(action)
-				logger.Printf(" [%s] running action %s", myId, acJson)
-				action.Run(eventManager, myId)
+				logger.Info(" [%s] running action %s", myId, acJson)
+				action.Run(em, myId)
 			}
 		}
 	}
+	logger.Debugf("Matched %d rules", matches)
 }
 
-func (eventManager *EventManagerImpl) run() {
+func (em *EventManagerImpl) run() {
 	go func() {
 		for true {
 			time.Sleep(30 * time.Second)
 			ms := runtime.MemStats{}
 			runtime.ReadMemStats(&ms)
 			fmtTime := time.Unix(int64(ms.LastGC)/1000/1000/1000, 0).Local().Format("Mon 02-01-2006 15:04:05")
-			logger.Printf(" ==> goroutines: %d, heap: %d, lastgc: %s", runtime.NumGoroutine(), ms.HeapAlloc, fmtTime)
+			logger.Debugf(" ==> goroutines: %d, heap: %d, lastgc: %s", runtime.NumGoroutine(), ms.HeapAlloc, fmtTime)
 		}
 	}()
-	logger.Printf("Running EventManager")
+	logger.Info("Running EventManager")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
@@ -76,42 +77,42 @@ func (eventManager *EventManagerImpl) run() {
 	s := <-c
 	fmt.Println("Got signal:", s)
 
-	logger.Printf("EventManager stopping all bridges...")
-	for _, bridge := range eventManager.bridges {
+	logger.Info("EventManager stopping all bridges...")
+	for _, bridge := range em.bridges {
 		bridge.Stop()
 	}
 }
 
-func (eventManager *EventManagerImpl) AddRule(rule interfaces.Rule, i map[string]interface{}) {
-	eventManager.rules = append(eventManager.rules, rule)
-	logger.Printf("Adding rule %s", rule)
+func (em *EventManagerImpl) AddRule(rule interfaces.Rule, i map[string]interface{}) {
+	em.rules = append(em.rules, rule)
+	logger.Debugf("Adding rule %s", rule)
 }
 
-func (eventManager *EventManagerImpl) Trigger(url string) {
-	logger.Printf("Triggering %s", url)
+func (em *EventManagerImpl) Trigger(url string) {
+	logger.Debugf("Triggering %s", url)
 	re, _ := regexp.Compile("^([^:]*)://([^/]*)/(.*)")
 	subs := re.FindStringSubmatch(url)
-	logger.Printf("Sub matches: %s", subs)
+	logger.Debugf("Sub matches: %s", subs)
 	switch subs[1] {
 	case "bridge":
-		logger.Printf("Routing to %s bridge %s", subs[1], subs[2])
-		eventManager.triggerBridge(subs[2], subs[3])
+		logger.Debugf("Routing to %s bridge %s", subs[1], subs[2])
+		em.triggerBridge(subs[2], subs[3])
 	}
 }
 
-func (eventManager *EventManagerImpl) triggerBridge(name string, uri string) {
-	logger.Printf("triggering bridge %s uri %s", name, uri)
-	bridge,found := eventManager.bridges[name]
+func (em *EventManagerImpl) triggerBridge(name string, uri string) {
+	logger.Debugf("triggering bridge %s uri %s", name, uri)
+	bridge,found := em.bridges[name]
 	if found {
-		logger.Printf("Found bridge %s", name)
+		logger.Debugf("Found bridge %s", name)
 		bridge.Trigger(uri)
 	} else {
 		logger.Panicf("Bridge %s not found. Remaining URI %s", name, uri)
 	}
 }
 
-func (ev *EventManagerImpl) Start() {
-	logger.Printf("Reading configuration")
+func (em *EventManagerImpl) Start() {
+	logger.Debugf("Reading configuration")
 	config, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		panic(err)
@@ -123,34 +124,34 @@ func (ev *EventManagerImpl) Start() {
 		panic(err)
 	}
 
-	logger.Printf("Initializing bridges")
+	logger.Debugf("Initializing bridges")
 	for _, bridgeConfig := range jsonObject["bridges"].([]interface{}) {
 		bridgeType := bridgeConfig.(map[string]interface{})["type"].(string)
-		logger.Printf("Instantiating bridge type %s", bridgeType)
+		logger.Debugf("Instantiating bridge type %s", bridgeType)
 		bridgeFactory, found := bridges.BridgeFactories[bridgeType]
 		if found {
 			newBridge := bridgeFactory()
-			ev.AddBridge(newBridge, bridgeConfig.(map[string]interface{}))
+			em.AddBridge(newBridge, bridgeConfig.(map[string]interface{}))
 		} else {
 			logger.Fatalf("Error while instantiating bridge: %b", err)
 		}
 	}
 
-	logger.Printf("Initializing rules")
+	logger.Debugf("Initializing rules")
 	for _, ruleConfig := range jsonObject["rules"].([]interface{}) {
 		ruleType := ruleConfig.(map[string]interface{})["type"].(string)
-		logger.Printf("Instantiating rule type %s", ruleType)
+		logger.Debugf("Instantiating rule type %s", ruleType)
 		ruleFactory, found := rules.RuleFactories[ruleType]
 		if found {
 			newRule := ruleFactory(ruleConfig.(map[string]interface{}))
-			ev.AddRule(newRule, ruleConfig.(map[string]interface{}))
+			em.AddRule(newRule, ruleConfig.(map[string]interface{}))
 		} else {
 			logger.Fatalf("Error while instantiating bridge: %b", err)
 		}
 	}
 
-	logger.Printf(" === Bridges: %d, Rules: %d ===", len(ev.bridges), len(ev.rules))
-	logger.Printf("Entering main loop")
-	ev.run()
+	logger.Debugf(" === Bridges: %d, Rules: %d ===", len(em.bridges), len(em.rules))
+	logger.Debugf("Entering main loop")
+	em.run()
 
 }
