@@ -99,9 +99,9 @@ func (mq *MQTTBridge) Connect() {
 func (mq *MQTTBridge) connectRecovery() {
 	if r := recover(); r != nil {
 		logger.Debugf("Recovering connection for MQTT bridge %s", mq.id)
+		time.Sleep(3 * time.Second)
+		mq.Connect()
 	}
-	time.Sleep(3 * time.Second)
-	mq.Connect()
 }
 
 func (mq *MQTTBridge) Stop() {
@@ -110,12 +110,11 @@ func (mq *MQTTBridge) Stop() {
 
 func (mq *MQTTBridge) Trigger(uri string) {
 	logger.Debugf("Publishing MQTT bridge %s: %s", mq.id, uri)
-	lastIndex := strings.LastIndex(uri, " ")
+	lastIndex := strings.LastIndex(uri, "#")
 	var message string = ""
 	if lastIndex >= 0 {
 		message = uri[lastIndex:]
 		uri = uri[:lastIndex]
 	}
 	mq.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(uri), Message: []byte(message)})
-	time.Sleep(10 * time.Second)
 }

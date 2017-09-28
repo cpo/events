@@ -1,11 +1,23 @@
 {
+
   "bridges": [
     {
       "name": "hue1",
       "description": "HUE bridge 1",
       "type": "hue",
-      "apiKey": "ktA1-FuirVj0yz6MXmpdx8QXgFIL44lAcC0ikeBl",
+      "apiKey": "ktA1-FuirVj0yz6MXmpdx8xxxxxxxxxxxxxxxxxxx",
       "pollInterval": 200
+    },
+    {
+      "name": "zwave1",
+      "description": "Z-wave usb stick",
+      "type": "zwave",
+      "port": "/dev/tty.usbmodem1421",
+      "devices": {
+        "3": {
+          "type": "contact"
+        }
+      }
     },
     {
       "name": "mqtt1",
@@ -14,7 +26,7 @@
       "host": "beaglebone.local",
       "port": 1883,
       "user": "mqtt",
-      "password": "emkutete",
+      "password": "xxxxxxxx",
       "proto": "tcp",
       "clientId": "mqtt-bridge"
     }
@@ -33,6 +45,28 @@
           "trigger": "bridge://hue1/lamp2/on"
         }
       ]
+    },
+    {
+      "type": "regex",
+      "regex": "^mqtt://mqtt1/stat/sonoff/POWER#OFF$",
+      "actions": [
+        {
+          "type": "http",
+          "method": "GET",
+          "format": "http://www.google.nl/q=alarm"
+        },
+        {
+          "type":"email",
+          "address": "smtp-server-address",
+          "user": "user@domain",
+          "password": "XXXXX",
+          "from": "user@domain",
+          "to": "user@domain",
+          "subject": "ALARM",
+          "message": "ALARM!!!!!"
+        }
+      ]
     }
+
   ]
 }

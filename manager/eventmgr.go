@@ -47,11 +47,11 @@ func (em *EventManagerImpl) Dispatch(url string) {
 	for ruleN, rule := range em.rules {
 		if rule.Matches(url) {
 			matches++
-			logger.Info("Rule %d matches. Execute %d actions", ruleN, len(rule.GetActions()))
+			logger.Infof("Rule %d matches. Execute %d actions", ruleN, len(rule.GetActions()))
 			myId := uuid.NewV4().String()
 			for _, action := range rule.GetActions() {
 				acJson,_ := json.Marshal(action)
-				logger.Info(" [%s] running action %s", myId, acJson)
+				logger.Infof(" [%s] running %T action %s", myId, action, acJson)
 				action.Run(em, myId)
 			}
 		}

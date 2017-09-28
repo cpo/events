@@ -1,23 +1,17 @@
-package: .
+package: github.com/cpo/events
 import:
-- package: github.com/cpo/events
-  subpackages:
-  - actions
-  - bridges
-  - bridges/hue
-  - bridges/mqtt
-  - bridges/zwave
-  - interfaces
-  - manager
-  - rules
-- package: github.com/cpo/go-hue
-  subpackages:
-  - groups
-  - lights
-  - portal
-  - sensors
+- package: encoding/json
+- package: flag
+- package: fmt
+- package: github.com/Sirupsen/logrus
+  version: ^1.0.3
+- package: github.com/cpo/go-hue/groups
+- package: github.com/cpo/go-hue/lights
+- package: github.com/cpo/go-hue/portal
+- package: github.com/cpo/go-hue/sensors
 - package: github.com/satori/go.uuid
-- package: github.com/yosssi/gmq
-  subpackages:
-  - mqtt
-  - mqtt/client
+  version: ^1.1.0
+- package: github.com/stampzilla/gozwave
+- package: github.com/stampzilla/gozwave/events
+- package: github.com/yosssi/gmq/mqtt
+- package: github.com/yosssi/gmq/mqtt/client

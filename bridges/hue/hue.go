@@ -9,6 +9,7 @@ import (
 	"github.com/cpo/go-hue/sensors"
 	logger "github.com/Sirupsen/logrus"
 	"sync"
+	"time"
 )
 
 type HueBridge struct {
@@ -36,9 +37,17 @@ func (hue *HueBridge) GetID() string {
 	return hue.id
 }
 
+func (hue *HueBridge) restoreConnection() {
+	if r := recover(); r != nil {
+		logger.Info("Restarting HUE bridge...")
+		time.Sleep(10 * time.Second)
+		hue.Connect()
+	}
+}
+
 func (hue *HueBridge) Connect() {
 	logger.Info("Connecting HUE bridge %s", hue.id)
-
+	defer hue.restoreConnection()
 	pp, err := portal.GetPortal()
 	if err != nil {
 		logger.Panic("portal.GetPortal() ERROR: ", err)
@@ -51,7 +60,7 @@ func (hue *HueBridge) Connect() {
 	logger.Debugf("Lights")
 	logger.Debugf("------")
 	for _, l := range allLights {
-		logger.Debugf("ID: %d Name: %sZ-Wave", l.ID, l.Name)
+		logger.Debugf("ID: %d Name: %s", l.ID, l.Name)
 	}
 	gg := groups.New(pp[0].InternalIPAddress, hue.apiKey)
 	allGroups, err := gg.GetAllGroups()
@@ -61,7 +70,7 @@ func (hue *HueBridge) Connect() {
 	logger.Debugf("Groups")
 	logger.Debugf("------")
 	for _, g := range allGroups {
-		logger.Debugf("ID: %d Name: %sZ-Wave", g.ID, g.Name)
+		logger.Debugf("ID: %d Name: %s", g.ID, g.Name)
 	}
 	ss := sensors.New(pp[0].InternalIPAddress, hue.apiKey)
 	allSensors, err := ss.GetAllSensors()
@@ -71,7 +80,7 @@ func (hue *HueBridge) Connect() {
 	logger.Debugf("Sensors")
 	logger.Debugf("------")
 	for _, g := range allSensors {
-		logger.Debugf("ID: %d Name: %sZ-Wave", g.ID, g.Name)
+		logger.Debugf("ID: %d Name: %s", g.ID, g.Name)
 	}
 
 	go hue.pollSensors(ss)

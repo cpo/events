@@ -11,6 +11,8 @@ var ActionFactories = map[string]func(map[string]interface{}) interfaces.Action{
 	// HUE bridge
 	"wait": NewWaitAction,
 	"trigger": NewTriggerAction,
+	"http": NewHttpAction,
+	"email": NewEmailAction,
 }
 
 var logger = log.New()
@@ -19,8 +21,16 @@ func NewWaitAction(config map[string]interface{}) interfaces.Action {
 	return new(WaitAction).Initialize(config)
 }
 
+func NewEmailAction(config map[string]interface{}) interfaces.Action {
+	return new(EMailAction).Initialize(config)
+}
+
 func NewTriggerAction(config map[string]interface{}) interfaces.Action {
 	return new(TriggerAction).Initialize(config)
+}
+
+func NewHttpAction(config map[string]interface{}) interfaces.Action {
+	return new(HttpAction).Initialize(config)
 }
 
 func ParseActions(config []interface{}) []interfaces.Action {
