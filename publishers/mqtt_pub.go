@@ -99,6 +99,7 @@ func (mqp *MQTTPublisher) Publish(url string) {
 		url2 = url2[:lastIndex]
 	}
 	if mqp.ready {
+		logger.Debugf(" topic: %s message: %s", url2, message)
 		mqp.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(url2), Message: []byte(message)})
 	} else {
 		logger.Warnf("Cannot publish %s", url)
