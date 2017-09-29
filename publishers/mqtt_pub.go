@@ -22,7 +22,8 @@ type MQTTPublisher struct {
 }
 
 func NewMQTTPublisher(manager interfaces.EventManager, config map[string]interface{}) interfaces.Publisher {
-	return new(MQTTPublisher).Initialize(manager, config)
+	p := new(MQTTPublisher).Initialize(manager, config)
+	return p
 }
 
 func (mqp *MQTTPublisher) Initialize(eventManager interfaces.EventManager, config map[string]interface{}) interfaces.Publisher {

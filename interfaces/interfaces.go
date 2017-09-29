@@ -7,6 +7,7 @@ type EventManager interface {
 }
 
 type Publisher interface {
+	Connect()
 	Publish(url string)
 }
 
