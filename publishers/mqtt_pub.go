@@ -6,7 +6,6 @@ import (
 	logger "github.com/Sirupsen/logrus"
 	"fmt"
 	"github.com/cpo/events/interfaces"
-	"github.com/yosssi/gmq/mqtt"
 	"strings"
 	"sync"
 	"time"
@@ -18,11 +17,12 @@ type MQTTPublisher struct {
 	config       map[string]interface{}
 	wg           sync.WaitGroup
 	prefix       string
+	ready        bool
 	eventManager interfaces.EventManager
 }
 
 func NewMQTTPublisher(manager interfaces.EventManager, config map[string]interface{}) interfaces.Publisher {
-	return new(MQTTPublisher).Initialize(manager,config)
+	return new(MQTTPublisher).Initialize(manager, config)
 }
 
 func (mqp *MQTTPublisher) Initialize(eventManager interfaces.EventManager, config map[string]interface{}) interfaces.Publisher {
@@ -30,6 +30,7 @@ func (mqp *MQTTPublisher) Initialize(eventManager interfaces.EventManager, confi
 	mqp.id = config["name"].(string)
 	mqp.config = config
 	mqp.prefix = config["prefix"].(string)
+	mqp.ready = false
 	mqp.eventManager = eventManager
 	logger.Debugf("Initialize MQTT publisher %s with %s", mqp.GetID(), cfgStr)
 	return mqp
@@ -60,20 +61,7 @@ func (mqp *MQTTPublisher) Connect() {
 		logger.Panic(err)
 	}
 
-	// Subscribe to topics.
-	err = mqp.mqttClient.Subscribe(&client.SubscribeOptions{
-		SubReqs: []*client.SubReq{
-			&client.SubReq{
-				TopicFilter: []byte("#"),
-				QoS:         mqtt.QoS2,
-				// Define the processing of the message handler.
-				Handler: func(topicName, message []byte) {
-					logger.Debugf("MQTT topic=%s message=%s", string(topicName), string(message))
-					go mqp.eventManager.Dispatch(fmt.Sprintf("mqtt://%s/%s#%s", mqp.config["name"], topicName, string(message)))
-				},
-			},
-		},
-	})
+	mqp.ready = true
 
 	logger.Debugf("MQTT publisher %s connected.", mqp.id)
 
@@ -83,15 +71,7 @@ func (mqp *MQTTPublisher) Connect() {
 
 	logger.Debugf("Stop MQTT publisher %s", mqp.id)
 
-	// Unsubscribe from topics.
-	err = mqp.mqttClient.Unsubscribe(&client.UnsubscribeOptions{
-		TopicFilters: [][]byte{
-			[]byte("/#"),
-		},
-	})
-	if err != nil {
-		logger.Panic(err)
-	}
+	mqp.ready = false
 	if err := mqp.mqttClient.Disconnect(); err != nil {
 		logger.Panic(err)
 	}
@@ -110,13 +90,18 @@ func (mqp *MQTTPublisher) Stop() {
 }
 
 func (mqp *MQTTPublisher) Publish(url string) {
-	url = url[strings.Index(url,"://")+3:]
-	logger.Debugf("Publishing MQTT publisher %s: %s", mqp.id, url)
-	lastIndex := strings.LastIndex(url, "#")
+	url2 := url[strings.Index(url, "://")+3:]
+	logger.Debugf("Publishing MQTT publisher %s: %s", mqp.id, url2)
+	lastIndex := strings.LastIndex(url2, "#")
 	var message string = ""
 	if lastIndex >= 0 {
 		message = url[lastIndex:]
-		url = url[:lastIndex]
+		url2 = url2[:lastIndex]
 	}
-	mqp.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(url), Message: []byte(message)})
+	if mqp.ready {
+		mqp.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(url2), Message: []byte(message)})
+	} else {
+		logger.Warnf("Cannot publish %s", url)
+	}
+
 }
