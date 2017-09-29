@@ -131,7 +131,7 @@ func (em *EventManagerImpl) Start() {
 		panic(err)
 	}
 
-	if pubConfig := jsonObject["publisher"].(map[string]interface{}); pubConfig {
+	if pubConfig := jsonObject["publisher"].(map[string]interface{}); pubConfig != nil {
 		em.publisher = publishers.PublisherFactories[pubConfig["type"].(string)](em, pubConfig)
 	}
 
