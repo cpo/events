@@ -21,7 +21,7 @@ type EventManagerImpl struct {
 	id        string
 	bridges   map[string]interfaces.Bridge
 	rules     []interfaces.Rule
-	publisher *interfaces.Publisher
+	publisher interfaces.Publisher
 }
 
 func New() interfaces.EventManager {
@@ -131,8 +131,8 @@ func (em *EventManagerImpl) Start() {
 		panic(err)
 	}
 
-	if pubName := jsonObject["publisher"].(string); pubName {
-		em.publisher = publishers.PublisherFactories[pubName]()
+	if pubConfig := jsonObject["publisher"].(map[string]interface{}); pubConfig {
+		em.publisher = publishers.PublisherFactories[pubConfig["type"].(string)](em, pubConfig)
 	}
 
 	logger.Debugf("Initializing bridges")

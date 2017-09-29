@@ -1,5 +1,8 @@
 {
-
+  "publisher": {
+    "type": "mqtt",
+    "prefix": "events/"
+  },
   "bridges": [
     {
       "name": "hue1",

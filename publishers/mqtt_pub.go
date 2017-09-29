@@ -22,46 +22,47 @@ type MQTTPublisher struct {
 	eventManager interfaces.EventManager
 }
 
-func NewMQTTPublisher() *interfaces.Publisher {
-	return new(MQTTPublisher)
+func NewMQTTPublisher(manager interfaces.EventManager, config map[string]interface{}) interfaces.Publisher {
+	return new(MQTTPublisher).Initialize(manager,config)
 }
 
-func (mq *MQTTPublisher) Initialize(eventManager interfaces.EventManager, config map[string]interface{}) {
+func (mqp *MQTTPublisher) Initialize(eventManager interfaces.EventManager, config map[string]interface{}) interfaces.Publisher {
 	cfgStr, _ := json.Marshal(config)
-	mq.id = config["name"].(string)
-	mq.config = config
-	mq.prefix = config["prefix"].(string)
-	mq.eventManager = eventManager
-	logger.Debugf("Initialize MQTT publisher %s with %s", mq.GetID(), cfgStr)
+	mqp.id = config["name"].(string)
+	mqp.config = config
+	mqp.prefix = config["prefix"].(string)
+	mqp.eventManager = eventManager
+	logger.Debugf("Initialize MQTT publisher %s with %s", mqp.GetID(), cfgStr)
+	return mqp
 }
 
-func (mq *MQTTPublisher) GetID() string {
-	return mq.id
+func (mqp *MQTTPublisher) GetID() string {
+	return mqp.id
 }
 
-func (mq *MQTTPublisher) Connect() {
-	logger.Infof("Connecting MQTT publisher %s", mq.id)
-	mq.mqttClient = client.New(&client.Options{})
-	defer mq.mqttClient.Terminate()
-	defer mq.connectRecovery()
+func (mqp *MQTTPublisher) Connect() {
+	logger.Infof("Connecting MQTT publisher %s", mqp.id)
+	mqp.mqttClient = client.New(&client.Options{})
+	defer mqp.mqttClient.Terminate()
+	defer mqp.connectRecovery()
 
 	logger.Infof("MQTT connecting client %s to %s://%s:%.0f",
-		mq.config["clientId"].(string),
-		mq.config["proto"].(string),
-		mq.config["host"].(string),
-		mq.config["port"].(float64))
+		mqp.config["clientId"].(string),
+		mqp.config["proto"].(string),
+		mqp.config["host"].(string),
+		mqp.config["port"].(float64))
 
-	err := mq.mqttClient.Connect(&client.ConnectOptions{
-		Network:  mq.config["proto"].(string),
-		Address:  mq.config["host"].(string) + ":" + fmt.Sprintf("%.0f", mq.config["port"].(float64)),
-		ClientID: []byte(mq.config["clientId"].(string)),
+	err := mqp.mqttClient.Connect(&client.ConnectOptions{
+		Network:  mqp.config["proto"].(string),
+		Address:  mqp.config["host"].(string) + ":" + fmt.Sprintf("%.0f", mqp.config["port"].(float64)),
+		ClientID: []byte(mqp.config["clientId"].(string)),
 	})
 	if err != nil {
 		logger.Panic(err)
 	}
 
 	// Subscribe to topics.
-	err = mq.mqttClient.Subscribe(&client.SubscribeOptions{
+	err = mqp.mqttClient.Subscribe(&client.SubscribeOptions{
 		SubReqs: []*client.SubReq{
 			&client.SubReq{
 				TopicFilter: []byte("#"),
@@ -69,22 +70,22 @@ func (mq *MQTTPublisher) Connect() {
 				// Define the processing of the message handler.
 				Handler: func(topicName, message []byte) {
 					logger.Debugf("MQTT topic=%s message=%s", string(topicName), string(message))
-					go mq.eventManager.Dispatch(fmt.Sprintf("mqtt://%s/%s#%s", mq.config["name"], topicName, string(message)))
+					go mqp.eventManager.Dispatch(fmt.Sprintf("mqtt://%s/%s#%s", mqp.config["name"], topicName, string(message)))
 				},
 			},
 		},
 	})
 
-	logger.Debugf("MQTT publisher %s connected.", mq.id)
+	logger.Debugf("MQTT publisher %s connected.", mqp.id)
 
-	mq.wg = sync.WaitGroup{}
-	mq.wg.Add(1)
-	mq.wg.Wait()
+	mqp.wg = sync.WaitGroup{}
+	mqp.wg.Add(1)
+	mqp.wg.Wait()
 
-	logger.Debugf("Stop MQTT publisher %s", mq.id)
+	logger.Debugf("Stop MQTT publisher %s", mqp.id)
 
 	// Unsubscribe from topics.
-	err = mq.mqttClient.Unsubscribe(&client.UnsubscribeOptions{
+	err = mqp.mqttClient.Unsubscribe(&client.UnsubscribeOptions{
 		TopicFilters: [][]byte{
 			[]byte("/#"),
 		},
@@ -92,31 +93,31 @@ func (mq *MQTTPublisher) Connect() {
 	if err != nil {
 		logger.Panic(err)
 	}
-	if err := mq.mqttClient.Disconnect(); err != nil {
+	if err := mqp.mqttClient.Disconnect(); err != nil {
 		logger.Panic(err)
 	}
 }
 
-func (mq *MQTTPublisher) connectRecovery() {
+func (mqp *MQTTPublisher) connectRecovery() {
 	if r := recover(); r != nil {
-		logger.Debugf("Recovering connection for MQTT publisher %s", mq.id)
+		logger.Debugf("Recovering connection for MQTT publisher %s", mqp.id)
 		time.Sleep(3 * time.Second)
-		mq.Connect()
+		mqp.Connect()
 	}
 }
 
-func (mq *MQTTPublisher) Stop() {
-	mq.wg.Done()
+func (mqp *MQTTPublisher) Stop() {
+	mqp.wg.Done()
 }
 
-func (mq *MQTTPublisher) Publish(url string) {
+func (mqp *MQTTPublisher) Publish(url string) {
 	url = url[strings.Index(url,"://")+3:]
-	logger.Debugf("Publishing MQTT publisher %s: %s", mq.id, url)
+	logger.Debugf("Publishing MQTT publisher %s: %s", mqp.id, url)
 	lastIndex := strings.LastIndex(url, "#")
 	var message string = ""
 	if lastIndex >= 0 {
 		message = url[lastIndex:]
 		url = url[:lastIndex]
 	}
-	mq.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(url), Message: []byte(message)})
+	mqp.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(url), Message: []byte(message)})
 }
