@@ -96,12 +96,12 @@ func (mqp *MQTTPublisher) Publish(url string) {
 	lastIndex := strings.LastIndex(url2, "#")
 	var message string = ""
 	if lastIndex >= 0 {
-		message = url[lastIndex:]
+		message = url2[lastIndex:]
 		url2 = url2[:lastIndex]
 	}
 	if mqp.ready {
 		logger.Debugf(" topic: %s message: %s", url2, message)
-		mqp.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(mqp.prefix + url2), Message: []byte(message)})
+		mqp.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(mqp.prefix + url2), Message: []byte(message), QoS:2, Retain:false})
 	} else {
 		logger.Warnf("Cannot publish %s", url)
 	}
