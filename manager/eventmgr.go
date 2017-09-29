@@ -133,7 +133,7 @@ func (em *EventManagerImpl) Start() {
 
 	if pubConfig := jsonObject["publisher"].(map[string]interface{}); pubConfig != nil {
 		em.publisher = publishers.PublisherFactories[pubConfig["type"].(string)](em, pubConfig)
-		em.publisher.Connect()
+		go em.publisher.Connect()
 	}
 
 	logger.Debugf("Initializing bridges")
