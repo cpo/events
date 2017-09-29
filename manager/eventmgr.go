@@ -14,12 +14,14 @@ import (
 	"regexp"
 	"runtime"
 	"time"
+	"github.com/cpo/events/publishers"
 )
 
 type EventManagerImpl struct {
-	id      string
-	bridges map[string]interfaces.Bridge
-	rules   []interfaces.Rule
+	id        string
+	bridges   map[string]interfaces.Bridge
+	rules     []interfaces.Rule
+	publisher *interfaces.Publisher
 }
 
 func New() interfaces.EventManager {
@@ -42,6 +44,11 @@ func (em *EventManagerImpl) AddBridge(bridge interfaces.Bridge, bridgeConfig map
 }
 
 func (em *EventManagerImpl) Dispatch(url string) {
+	if em.publisher != nil {
+		logger.Debugf("Publishing event %s", url)
+		go em.publisher.Publish(url)
+	}
+
 	logger.Debugf("Dispatching event %s", url)
 	matches := 0
 	for ruleN, rule := range em.rules {
@@ -50,7 +57,7 @@ func (em *EventManagerImpl) Dispatch(url string) {
 			logger.Infof("Rule %d matches. Execute %d actions", ruleN, len(rule.GetActions()))
 			myId := uuid.NewV4().String()
 			for _, action := range rule.GetActions() {
-				acJson,_ := json.Marshal(action)
+				acJson, _ := json.Marshal(action)
 				logger.Infof(" [%s] running %T action %s", myId, action, acJson)
 				action.Run(em, myId)
 			}
@@ -102,7 +109,7 @@ func (em *EventManagerImpl) Trigger(url string) {
 
 func (em *EventManagerImpl) triggerBridge(name string, uri string) {
 	logger.Debugf("triggering bridge %s uri %s", name, uri)
-	bridge,found := em.bridges[name]
+	bridge, found := em.bridges[name]
 	if found {
 		logger.Debugf("Found bridge %s", name)
 		bridge.Trigger(uri)
@@ -122,6 +129,10 @@ func (em *EventManagerImpl) Start() {
 	err = json.Unmarshal(config, &jsonObject)
 	if err != nil {
 		panic(err)
+	}
+
+	if pubName := jsonObject["publisher"].(string); pubName {
+		em.publisher = publishers.PublisherFactories[pubName]()
 	}
 
 	logger.Debugf("Initializing bridges")

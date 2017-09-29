@@ -6,6 +6,10 @@ type EventManager interface {
 	Start()
 }
 
+type Publisher interface {
+	Publish(url string)
+}
+
 type Action interface {
 	Run(EventManager, string)
 }

@@ -1,4 +1,4 @@
-package mqtt
+package publishers
 
 import (
 	"encoding/json"
@@ -12,32 +12,34 @@ import (
 	"time"
 )
 
-type MQTTBridge struct {
+type MQTTPublisher struct {
 	id           string
 	mqttClient   *client.Client
 	config       map[string]interface{}
 	wg           sync.WaitGroup
+	prefix       string
 	eventManager interfaces.EventManager
 }
 
-func NewMQTTBridge() interfaces.Bridge {
-	return new(MQTTBridge)
+func NewMQTTPublisher() *interfaces.Publisher {
+	return new(MQTTPublisher)
 }
 
-func (mq *MQTTBridge) Initialize(eventManager interfaces.EventManager, config map[string]interface{}) {
+func (mq *MQTTPublisher) Initialize(eventManager interfaces.EventManager, config map[string]interface{}) {
 	cfgStr, _ := json.Marshal(config)
 	mq.id = config["name"].(string)
 	mq.config = config
+	mq.prefix = config["prefix"].(string)
 	mq.eventManager = eventManager
-	logger.Debugf("Initialize MQTT bridge %s with %s", mq.GetID(), cfgStr)
+	logger.Debugf("Initialize MQTT publisher %s with %s", mq.GetID(), cfgStr)
 }
 
-func (mq *MQTTBridge) GetID() string {
+func (mq *MQTTPublisher) GetID() string {
 	return mq.id
 }
 
-func (mq *MQTTBridge) Connect() {
-	logger.Infof("Connecting MQTT bridge %s", mq.id)
+func (mq *MQTTPublisher) Connect() {
+	logger.Infof("Connecting MQTT publisher %s", mq.id)
 	mq.mqttClient = client.New(&client.Options{})
 	defer mq.mqttClient.Terminate()
 	defer mq.connectRecovery()
@@ -72,13 +74,13 @@ func (mq *MQTTBridge) Connect() {
 		},
 	})
 
-	logger.Debugf("MQTT bridge %s connected.", mq.id)
+	logger.Debugf("MQTT publisher %s connected.", mq.id)
 
 	mq.wg = sync.WaitGroup{}
 	mq.wg.Add(1)
 	mq.wg.Wait()
 
-	logger.Debugf("Stop MQTT bridge %s", mq.id)
+	logger.Debugf("Stop MQTT publisher %s", mq.id)
 
 	// Unsubscribe from topics.
 	err = mq.mqttClient.Unsubscribe(&client.UnsubscribeOptions{
@@ -94,25 +96,25 @@ func (mq *MQTTBridge) Connect() {
 	}
 }
 
-func (mq *MQTTBridge) connectRecovery() {
+func (mq *MQTTPublisher) connectRecovery() {
 	if r := recover(); r != nil {
-		logger.Debugf("Recovering connection for MQTT bridge %s", mq.id)
+		logger.Debugf("Recovering connection for MQTT publisher %s", mq.id)
 		time.Sleep(3 * time.Second)
 		mq.Connect()
 	}
 }
 
-func (mq *MQTTBridge) Stop() {
+func (mq *MQTTPublisher) Stop() {
 	mq.wg.Done()
 }
 
-func (mq *MQTTBridge) Trigger(uri string) {
-	logger.Debugf("Publishing MQTT bridge %s: %s", mq.id, uri)
-	lastIndex := strings.LastIndex(uri, "#")
+func (mq *MQTTPublisher) Publish(url string) {
+	logger.Debugf("Publishing MQTT publisher %s: %s", mq.id, url)
+	lastIndex := strings.LastIndex(url, "#")
 	var message string = ""
 	if lastIndex >= 0 {
-		message = uri[lastIndex:]
-		uri = uri[:lastIndex]
+		message = url[lastIndex:]
+		url = url[:lastIndex]
 	}
-	mq.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(uri), Message: []byte(message)})
+	mq.mqttClient.Publish(&client.PublishOptions{TopicName: []byte(url), Message: []byte(message)})
 }
