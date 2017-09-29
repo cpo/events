@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"regexp"
 )
 
 type MQTTPublisher struct {
@@ -109,6 +110,7 @@ func (mq *MQTTPublisher) Stop() {
 }
 
 func (mq *MQTTPublisher) Publish(url string) {
+	url = url[strings.Index(url,"://")+3:]
 	logger.Debugf("Publishing MQTT publisher %s: %s", mq.id, url)
 	lastIndex := strings.LastIndex(url, "#")
 	var message string = ""
