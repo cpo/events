@@ -1,9 +1,6 @@
 package publishers
 
 import (
-	"github.com/cpo/events/bridges/zwave"
-	"github.com/cpo/events/bridges/hue"
-	"github.com/cpo/events/bridges/mqtt"
 	"github.com/cpo/events/interfaces"
 )
 
